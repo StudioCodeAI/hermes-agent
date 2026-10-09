@@ -96,13 +96,21 @@ def _reference_keys(surface: str) -> Optional[set]:
 
 
 def _languages() -> List[str]:
+    """Bundled language ids — the union of every surface's own files.
+
+    A ``<lang>.tui.yaml`` file must not be read as the core catalog of a language
+    literally named ``<lang>.tui``, so strip a known surface suffix first.
+    """
     found = set()
-    for template in SURFACE_FILES.values():
-        suffix = template.replace("{lang}", "")
-        for path in LOCALES_DIR.glob(f"*{suffix}"):
-            name = path.name[: -len(suffix)]
-            if name and not name.startswith("_"):
-                found.add(name)
+    for path in LOCALES_DIR.glob("*.yaml"):
+        name = path.name[: -len(".yaml")]
+        if name.startswith("_"):
+            continue
+        for surface in ("tui", "desktop"):
+            if name.endswith(f".{surface}"):
+                name = name[: -(len(surface) + 1)]
+                break
+        found.add(name)
     return sorted(found - {"en"})
 
 
